@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DirectOrder — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--surface:#161616;--card:#1e1e1e;--border:#2a2a2a;
+  --text:#f0f0f0;--muted:#777;--dim:#333;
+  --green:#00e676;--gdim:#00e67618;
+  --amber:#ffb300;--adim:#ffb30018;
+  --red:#ff4444;--rdim:#ff444418;
+  --blue:#448aff;--bdim:#448aff18;
+  --r:12px;
+}
+html{font-size:16px}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font-family:'Sora',sans-serif;font-size:14px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
+
+/* ───── LOGIN ───── */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 0%,#0d1f0d,var(--bg) 65%)}
+.ll{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--green);margin-bottom:6px}
+.ll span{color:var(--text)}
+.ls{font-size:13px;color:var(--muted);margin-bottom:32px}
+.lcard{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:340px}
+.lcard h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.lcard p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.rbtn{padding:12px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+.rbtn span{font-size:20px;display:block;margin-bottom:4px}
+.rbtn.sel{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.pin{width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:22px;letter-spacing:10px;text-align:center;outline:none}
+.pin:focus{border-color:var(--green)}
+.lbtn{width:100%;padding:13px;margin-top:14px;background:var(--green);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+.lerr{color:var(--red);font-size:13px;text-align:center;margin-top:8px;display:none}
+.hint{margin-top:16px;padding:10px 14px;background:var(--adim);border:1px solid var(--amber);border-radius:10px;font-size:12px;color:var(--amber);text-align:center;line-height:1.7}
+
+/* ───── APP ───── */
+#app{display:none;flex-direction:column;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:200;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between}
+.tlogo{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--green)}
+.tright{display:flex;align-items:center;gap:10px}
+.rbadge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:50px;text-transform:uppercase;letter-spacing:.5px}
+.rbadge.owner{background:var(--adim);color:var(--amber)}
+.rbadge.manager{background:var(--bdim);color:var(--blue)}
+.rbadge.staff{background:var(--gdim);color:var(--green)}
+.xbtn{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 8px}
+
+.content{flex:1;padding:14px 14px 90px;max-width:680px;margin:0 auto;width:100%}
+.page{display:none}.page.on{display:block}
+
+.ph{margin-bottom:18px}
+.ph h1{font-size:20px;font-weight:800}
+.ph p{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* ───── BOTTOM NAV ───── */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 7px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;gap:3px;position:relative}
+.ni .ico{font-size:19px}
+.ni.on{color:var(--green)}
+.nbadge{position:absolute;top:5px;right:18%;background:var(--red);color:#fff;border-radius:50px;padding:1px 5px;font-size:9px;font-weight:700;display:none}
+.nbadge.on{display:block}
+
+/* ───── CARDS ───── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ct{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* ───── STATS ───── */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.sl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sv{font-size:21px;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.sv.g{color:var(--green)}.sv.a{color:var(--amber)}.sv.r{color:var(--red)}.sv.b{color:var(--blue)}
+.ss{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ───── ORDERS ───── */
+.ocard{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.ocard.new{border-left-color:var(--amber)}
+.ocard.confirmed{border-left-color:var(--blue)}
+.ocard.ready{border-left-color:var(--green)}
+.ocard.delivered{border-left-color:var(--dim);opacity:.6}
+.otop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.oid{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--green)}
+.otime{font-size:11px;color:var(--muted);margin-top:2px}
+.otype{font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;text-transform:uppercase;letter-spacing:.4px}
+.otype.delivery{background:var(--bdim);color:var(--blue)}
+.otype.takeaway{background:var(--adim);color:var(--amber)}
+.otype.dinein{background:var(--gdim);color:var(--green)}
+.ocust{font-size:14px;font-weight:600;margin-bottom:3px}
+.oaddr{font-size:12px;color:var(--muted);margin-bottom:6px}
+.oitems{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55}
+.ofooter{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ototal{font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green)}
+.ototal small{font-size:11px;color:var(--muted);font-weight:400;display:block}
+.oactions{display:flex;gap:6px;align-items:center}
+.wabtn{background:var(--gdim);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.ssel{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;outline:none}
+
+/* delivery bar */
+.dbar{margin:10px 0 4px;padding:10px;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+.assign-btn{width:100%;padding:9px;border-radius:9px;border:2px dashed var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.assign-btn:hover{border-color:var(--amber);color:var(--amber)}
+.dassigned{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dpills{display:flex;gap:5px;margin-left:auto}
+.dp{padding:5px 9px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+.dp.pa{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.dp.pb{border-color:var(--blue);color:var(--blue);background:var(--bdim)}
+.dp.pg{border-color:var(--green);color:var(--green);background:var(--gdim)}
+
+/* filter chips */
+.frow{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.frow::-webkit-scrollbar{display:none}
+.fc{padding:6px 13px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.fc.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+
+/* ───── MENU ───── */
+.mrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.mrow:last-child{border-bottom:none}
+.mimg{width:52px;height:52px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;object-fit:cover}
+.mimg img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.minfo{flex:1;min-width:0}
+.mname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mprice{font-size:12px;color:var(--green);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.mtags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.mt{font-size:10px;padding:2px 6px;border-radius:50px;font-weight:700}
+.mt.cost{background:var(--adim);color:var(--amber)}
+.mt.margin{background:var(--gdim);color:var(--green)}
+.mt.stock{background:var(--bdim);color:var(--blue)}
+.mt.low{background:var(--rdim);color:var(--red)}
+.mt.cal{background:var(--dim);color:var(--muted)}
+.mt.prep{background:var(--dim);color:var(--muted)}
+.mt.tag86{background:var(--rdim);color:var(--red)}
+.macts{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.tog{width:34px;height:19px;border-radius:50px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--green)}.tog.off{background:var(--dim)}
+.tog::after{content:'';position:absolute;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .2s}
+.tog.on::after{left:17px}.tog.off::after{left:2px}
+.ib{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ib:hover{border-color:var(--text);color:var(--text)}
+.ib.del:hover{border-color:var(--red);color:var(--red)}
+.cat-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.cat-name{font-size:14px;font-weight:800}
+
+/* ───── FORM ───── */
+.fg{margin-bottom:13px}
+.fl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
+.fi{width:100%;padding:11px 13px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;color:var(--text);outline:none;transition:border-color .15s}
+.fi:focus{border-color:var(--green)}
+.fi::placeholder{color:var(--muted)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:11px 18px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.bg{background:var(--green);color:#000}
+.bo{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.br{background:var(--rdim);color:var(--red);border:1px solid var(--red)}
+.bfull{width:100%}
+
+/* ───── MODAL ───── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:400;display:none;align-items:flex-end;justify-content:center}
+.ov.on{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
+.mh{width:40px;height:4px;background:var(--dim);border-radius:2px;margin:0 auto 18px}
+.mt2{font-size:17px;font-weight:800;margin-bottom:16px}
+
+/* ───── ALLERGEN / VIS ───── */
+.achips{display:flex;flex-wrap:wrap;gap:7px}
+.ac{display:flex;align-items:center;gap:4px;padding:6px 11px;border-radius:50px;border:1.5px solid var(--border);background:var(--card);font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.ac input{display:none}
+.ac.ck{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.vbgroup{display:flex;gap:7px}
+.vb{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 8px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.vb input{display:none}
+.vb.ck{border-color:var(--green);color:var(--green);background:var(--gdim)}
+
+/* drow */
+.drow{display:flex;gap:6px;align-items:center;margin-bottom:7px}
+.drow input{flex:1}
+.xrow{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.xrow:hover{border-color:var(--red);color:var(--red)}
+
+/* ───── PHOTO PREVIEW ───── */
+.photo-preview{width:72px;height:72px;border-radius:12px;background:var(--surface);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;overflow:hidden;cursor:pointer;position:relative}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.photo-preview input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-preview:hover{border-color:var(--green)}
+
+/* ───── CUSTOMERS ───── */
+.crow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.crow:last-child{border-bottom:none}
+.cav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;color:#fff}
+.cinfo{flex:1}
+.cname{font-size:14px;font-weight:600}
+.cmeta{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ───── ASSIGN ROW ───── */
+.arow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.arow:last-child{border-bottom:none}
+.aav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+/* ───── SETTINGS ───── */
+.stitle{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.ssec{margin-bottom:22px}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.srow:last-child{border-bottom:none}
+.srl{font-size:14px;font-weight:600}
+.srs{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ───── POS ───── */
+.ptrow{display:flex;gap:8px;margin-bottom:12px}
+.ptbtn{flex:1;padding:10px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.ptbtn.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding-bottom:80px}
+.pi{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;text-align:center;transition:all .15s;position:relative}
+.pi:hover{border-color:var(--green)}
+.pi.incart{border-color:var(--green);background:var(--gdim)}
+.pi.unavail{opacity:.35;pointer-events:none}
+.pi-img{width:56px;height:56px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 8px;overflow:hidden}
+.pi-img img{width:100%;height:100%;object-fit:cover}
+.piname{font-size:13px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.piprice{font-size:12px;color:var(--green);font-family:'IBM Plex Mono',monospace}
+.piqty{position:absolute;top:7px;right:7px;background:var(--green);color:#000;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.pcbar{position:fixed;bottom:58px;left:0;right:0;z-index:150;padding:10px 14px;background:var(--green);display:none}
+.pcbar.on{display:block}
+.pcbar-inner{max-width:680px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.pcobtn{background:#000;color:var(--green);border:none;border-radius:50px;padding:10px 22px;font-size:14px;font-weight:800;cursor:pointer}
+
+/* ───── PRINT ───── */
+.print-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.print-tab.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.receipt-preview{background:#fff;color:#000;border-radius:12px;padding:20px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7}
+.receipt-preview .rhead{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px dashed #ccc}
+.receipt-preview .rhead h2{font-size:16px;font-weight:700;margin-bottom:2px}
+.receipt-preview .rhead p{font-size:11px;color:#666}
+.receipt-preview .rrow{display:flex;justify-content:space-between;padding:3px 0}
+.receipt-preview .rrow.bold{font-weight:700;border-top:1px dashed #ccc;margin-top:6px;padding-top:6px}
+.receipt-preview .rfoot{text-align:center;margin-top:12px;padding-top:10px;border-top:2px dashed #ccc;font-size:11px;color:#666}
+.kitchen-preview{background:#fff;color:#000;border-radius:12px;padding:20px;font-family:'IBM Plex Mono',monospace}
+.kitchen-preview .khead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #000}
+.kitchen-preview .korder{font-size:22px;font-weight:900}
+.kitchen-preview .ktype{font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;background:#000;color:#fff}
+.kitchen-preview .kitem{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px dashed #ccc;font-size:15px;font-weight:700}
+.kitchen-preview .knote{font-size:12px;color:#666;font-style:italic;margin-top:2px}
+.kitchen-preview .kfooter{margin-top:12px;font-size:12px;color:#666;text-align:center}
+@media print{
+  body > *:not(#printable){display:none!important}
+  #printable{display:block!important;background:#fff;color:#000;padding:20px;font-family:'IBM Plex Mono',monospace}
+  .print-only{display:block}
+}
+/* ───── TOAST ───── */
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--green);color:#000;padding:9px 20px;border-radius:50px;font-size:13px;font-weight:700;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.newalert{position:fixed;top:64px;right:14px;background:var(--amber);color:#000;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;transform:translateX(120%);transition:transform .3s;max-width:220px}
+.newalert.on{transform:translateX(0)}
+
+/* ───── EMPTY ───── */
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty .eico{font-size:44px;margin-bottom:10px}
+
+/* ───── MARGIN INDICATOR ───── */
+.margin-box{width:100%;padding:11px 13px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen">
+  <div class="ll">Direct<span>Order</span></div>
+  <div class="ls">Restaurant Management System</div>
+  <div class="lcard">
+    <h2>Sign in</h2>
+    <p>Select your role then enter your PIN</p>
+    <div class="rgrid">
+      <button class="rbtn sel" onclick="selRole('owner',this)"><span>👑</span>Owner</button>
+      <button class="rbtn" onclick="selRole('manager',this)"><span>👨‍💼</span>Manager</button>
+      <button class="rbtn" onclick="selRole('staff',this)"><span>👨‍🍳</span>Staff</button>
+    </div>
+    <input class="pin" id="pinIn" type="password" maxlength="4" placeholder="••••" inputmode="numeric" onkeydown="if(event.key==='Enter')login()"/>
+    <div class="lerr" id="lerr">Wrong PIN — try again</div>
+    <button class="lbtn" onclick="login()">Enter →</button>
+    <div class="hint">Demo PINs:<br/>👑 Owner: <b>1111</b> &nbsp;·&nbsp; 👨‍💼 Manager: <b>2222</b> &nbsp;·&nbsp; 👨‍🍳 Staff: <b>3333</b></div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <div class="topbar">
+    <div class="tlogo">DirectOrder</div>
+    <div class="tright">
+      <span class="rbadge" id="rbadge"></span>
+      <button class="xbtn" onclick="logout()">Exit</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page on" id="pg-home">
+      <div class="ph"><h1 id="greet">Hello 👋</h1><p id="ddate"></p></div>
+      <div class="sgrid">
+        <div class="sc"><div class="sl">Orders Today</div><div class="sv a" id="st-orders">0</div></div>
+        <div class="sc"><div class="sl">Revenue</div><div class="sv g" id="st-rev">$0</div><div class="ss" id="st-revlbp"></div></div>
+        <div class="sc"><div class="sl">Pending</div><div class="sv r" id="st-pend">0</div></div>
+        <div class="sc"><div class="sl">Customers</div><div class="sv b" id="st-custs">0</div></div>
+      </div>
+      <div class="card" id="wk-card">
+        <div class="ch"><div class="ct">This Week</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+          <div><div style="font-size:19px;font-weight:800;color:var(--green);font-family:'IBM Plex Mono',monospace" id="wk-rev">$0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Revenue</div></div>
+          <div><div style="font-size:19px;font-weight:800;color:var(--amber);font-family:'IBM Plex Mono',monospace" id="wk-ord">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Orders</div></div>
+          <div><div style="font-size:19px;font-weight:800;color:var(--blue);font-family:'IBM Plex Mono',monospace" id="wk-avg">$0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Avg</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">Latest Orders</div><button class="btn bo" style="padding:5px 11px;font-size:12px" onclick="nav('orders')">View all</button></div>
+        <div id="dash-orders"></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="page" id="pg-orders">
+      <div class="ph"><h1>Orders</h1><p>Manage all incoming orders</p></div>
+      <div class="frow">
+        <button class="fc on" onclick="filterO('all',this)">All</button>
+        <button class="fc" onclick="filterO('new',this)">🟡 New</button>
+        <button class="fc" onclick="filterO('confirmed',this)">🔵 Confirmed</button>
+        <button class="fc" onclick="filterO('ready',this)">🟢 Ready</button>
+        <button class="fc" onclick="filterO('delivered',this)">✅ Done</button>
+      </div>
+      <div id="orders-list"></div>
+      <button class="btn bo bfull" onclick="demoOrder()" style="margin-top:8px">+ Simulate New Order (Demo)</button>
+    </div>
+
+    <!-- MENU -->
+    <div class="page" id="pg-menu">
+      <div class="ph"><h1>Menu</h1><p>Items, prices, availability</p></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn bg" style="flex:1" onclick="openItemModal(null)">+ Add Item</button>
+        <button class="btn bo" onclick="openCatModal()">📂 Categories</button>
+      </div>
+      <div id="menu-list"></div>
+    </div>
+
+    <!-- POS -->
+    <div class="page" id="pg-pos">
+      <div class="ph"><h1>Point of Sale 🖥️</h1><p>Take orders at counter or table</p></div>
+      <div class="ptrow">
+        <button class="ptbtn on" id="pt-dinein" onclick="setPT('dinein',this)">🪑 Dine-in</button>
+        <button class="ptbtn" id="pt-takeaway" onclick="setPT('takeaway',this)">🥡 Takeaway</button>
+        <button class="ptbtn" id="pt-delivery" onclick="setPT('delivery',this)">🚚 Delivery</button>
+      </div>
+      <div class="fg" id="pos-ctx-wrap">
+        <label class="fl" id="pos-ctx-label">Table number</label>
+        <input class="fi" id="pos-ctx" placeholder="e.g. Table 4"/>
+      </div>
+      <div class="frow" id="pos-cats"></div>
+      <div class="pgrid" id="pos-grid"></div>
+    </div>
+    <div class="pcbar" id="pcbar">
+      <div class="pcbar-inner">
+        <div>
+          <div style="font-size:11px;color:rgba(0,0,0,.6);font-weight:600" id="pc-count">0 items</div>
+          <div style="font-size:17px;font-weight:800;font-family:'IBM Plex Mono',monospace" id="pc-total">$0.00</div>
+        </div>
+        <button class="pcobtn" onclick="openPosCheckout()">Checkout →</button>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="pg-customers">
+      <div class="ph"><h1>Customers</h1><p>Your direct customer database</p></div>
+      <div id="custs-list"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="pg-settings">
+      <div class="ph"><h1>Settings</h1><p>Restaurant configuration</p></div>
+
+      <div class="ssec">
+        <div class="stitle">Restaurant Info</div>
+        <div class="fg"><label class="fl">Restaurant Name</label><input class="fi" id="s-name" value="Zeitouneh Kitchen"/></div>
+        <div class="fg"><label class="fl">Restaurant Address (pickup address)</label><input class="fi" id="s-addr" value="Hamra Street, Beirut"/></div>
+        <div class="fg"><label class="fl">WhatsApp Number</label><input class="fi" id="s-wa" value="+961 3 841 685"/></div>
+        <div class="fg"><label class="fl">USD Rate (1 USD = ? LBP)</label><input class="fi" id="s-rate" type="number" value="89500" oninput="saveSettings()"/></div>
+        <div class="fg"><label class="fl">VAT Rate (%)</label><input class="fi" id="s-vat" type="number" value="11" step="0.1" oninput="saveSettings()"/></div>
+        <div style="padding:10px 12px;background:var(--adim);border:1px solid var(--amber);border-radius:10px;font-size:12px;color:var(--amber);margin-bottom:12px">
+          ⚖️ Lebanon law: menu prices shown to customers must be VAT-inclusive. Receipts must break down net + VAT + total.
+        </div>
+        <button class="btn bg" onclick="saveSettings()">Save</button>
+      </div>
+
+      <div class="ssec" id="pin-sec">
+        <div class="stitle">Change PINs</div>
+        <div class="fg"><label class="fl">👑 Owner PIN</label><input class="fi" id="p-owner" type="password" maxlength="4" inputmode="numeric" placeholder="New PIN"/></div>
+        <div class="fg"><label class="fl">👨‍💼 Manager PIN</label><input class="fi" id="p-mgr" type="password" maxlength="4" inputmode="numeric" placeholder="New PIN"/></div>
+        <div class="fg"><label class="fl">👨‍🍳 Staff PIN</label><input class="fi" id="p-staff" type="password" maxlength="4" inputmode="numeric" placeholder="New PIN"/></div>
+        <button class="btn bg" onclick="savePins()">Update PINs</button>
+      </div>
+
+      <div class="ssec">
+        <div class="stitle">🛵 Our Delivery Drivers</div>
+        <div id="drivers-list"></div>
+        <div style="display:flex;gap:7px;margin-top:10px">
+          <input class="fi" id="nd-name" placeholder="Driver name" style="flex:1"/>
+          <input class="fi" id="nd-phone" placeholder="+961 7X XXX XXX" style="flex:1"/>
+          <button class="btn bg" style="padding:0 13px;flex-shrink:0" onclick="addDriver()">Add</button>
+        </div>
+      </div>
+
+      <div class="ssec">
+        <div class="stitle">🚚 Third Party Companies</div>
+        <div id="companies-list"></div>
+        <div style="display:flex;gap:7px;margin-top:10px">
+          <input class="fi" id="nc-name" placeholder="Company name" style="flex:1"/>
+          <input class="fi" id="nc-phone" placeholder="+961 X XXX XXX" style="flex:1"/>
+          <button class="btn bg" style="padding:0 13px;flex-shrink:0" onclick="addCompany()">Add</button>
+        </div>
+      </div>
+
+      <div class="ssec">
+        <div class="stitle">System</div>
+        <div class="srow"><div><div class="srl">Version</div><div class="srs">DirectOrder v2.0</div></div><div style="font-size:13px;color:var(--green);font-weight:700">DEMO</div></div>
+        <button class="btn br bfull" style="margin-top:12px" onclick="resetAll()">Reset All Data</button>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav">
+    <button class="ni on" onclick="nav('home')" id="ni-home"><span class="ico">📊</span>Home</button>
+    <button class="ni" onclick="nav('orders')" id="ni-orders" style="position:relative"><span class="ico">🧾</span>Orders<span class="nbadge" id="obadge"></span></button>
+    <button class="ni" onclick="nav('pos')" id="ni-pos"><span class="ico">🖥️</span>POS</button>
+    <button class="ni" onclick="nav('menu')" id="ni-menu"><span class="ico">🍽️</span>Menu</button>
+    <button class="ni" onclick="nav('customers')" id="ni-customers"><span class="ico">👥</span>Customers</button>
+    <button class="ni" onclick="nav('settings')" id="ni-settings"><span class="ico">⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Item Modal -->
+<div class="ov" id="item-modal">
+<div class="modal">
+  <div class="mh"></div>
+  <div class="mt2" id="item-modal-title">Add Menu Item</div>
+
+  <!-- Photo + Emoji row -->
+  <div class="fg">
+    <label class="fl">Photo / Emoji</label>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div class="photo-preview" id="photo-prev" onclick="document.getElementById('photo-file').click()">
+        <span id="photo-emoji-show">🍽️</span>
+        <input type="file" id="photo-file" accept="image/*" style="display:none" onchange="onPhotoChange(event)"/>
+      </div>
+      <div style="flex:1">
+        <input class="fi" id="f-emoji" placeholder="Emoji e.g. 🫘" maxlength="2" oninput="onEmojiInput()" style="margin-bottom:8px"/>
+        <button class="btn bo bfull" style="padding:9px" onclick="document.getElementById('photo-file').click()">📷 Upload Photo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category -->
+  <div class="fg">
+    <label class="fl">Category *</label>
+    <div style="display:flex;gap:7px">
+      <select class="fi" id="f-cat" style="flex:1"></select>
+      <button class="btn bo" style="padding:0 12px;flex-shrink:0" onclick="openCatModal()">+ New</button>
+    </div>
+  </div>
+
+  <div class="fg"><label class="fl">Item Name *</label><input class="fi" id="f-name" placeholder="e.g. Hummus Beiruti"/></div>
+  <div class="fg"><label class="fl">Description</label><input class="fi" id="f-desc" placeholder="e.g. Creamy chickpea hummus with olive oil..."/></div>
+
+  <!-- Prices -->
+  <div class="fr2">
+    <div class="fg">
+      <label class="fl">Selling Price (LBP) *</label>
+      <input class="fi" id="f-lbp" type="text" inputmode="numeric" placeholder="e.g. 45,000" oninput="onLBPInput()"/>
+    </div>
+    <div class="fg">
+      <label class="fl">Selling Price (USD)</label>
+      <input class="fi" id="f-usd" type="number" step="0.01" placeholder="auto" oninput="usdManual=true"/>
+    </div>
+  </div>
+  <div class="fr2">
+    <div class="fg">
+      <label class="fl">Cost Price (LBP)</label>
+      <input class="fi" id="f-cost" type="text" inputmode="numeric" placeholder="e.g. 20,000" oninput="onCostInput()"/>
+    </div>
+    <div class="fg">
+      <label class="fl">Profit Margin</label>
+      <div class="margin-box" id="f-margin" style="color:var(--muted)">—</div>
+    </div>
+  </div>
+
+  <!-- Stock -->
+  <div class="fr2">
+    <div class="fg"><label class="fl">Stock Count</label><input class="fi" id="f-stock" type="number" placeholder="Unlimited if empty"/></div>
+    <div class="fg"><label class="fl">Low Stock Alert</label><input class="fi" id="f-lowstock" type="number" placeholder="Alert at this qty"/></div>
+  </div>
+
+  <!-- Prep & Calories -->
+  <div class="fr2">
+    <div class="fg"><label class="fl">Prep Time (min)</label><input class="fi" id="f-prep" type="number" placeholder="e.g. 15"/></div>
+    <div class="fg"><label class="fl">Calories (kcal)</label><input class="fi" id="f-cal" type="number" placeholder="e.g. 450"/></div>
+  </div>
+
+  <!-- Variants -->
+  <div class="fg">
+    <label class="fl">Variants (e.g. Small / Large)</label>
+    <div id="variants-wrap"></div>
+    <button class="btn bo bfull" style="padding:8px;margin-top:4px" onclick="addVariantRow()">+ Add Variant</button>
+  </div>
+
+  <!-- Add-ons -->
+  <div class="fg">
+    <label class="fl">Add-ons / Extras</label>
+    <div id="addons-wrap"></div>
+    <button class="btn bo bfull" style="padding:8px;margin-top:4px" onclick="addAddonRow()">+ Add Extra</button>
+  </div>
+
+  <!-- Allergens -->
+  <div class="fg">
+    <label class="fl">Allergens</label>
+    <div class="achips" id="allergens-wrap">
+      <label class="ac"><input type="checkbox" value="gluten"/> 🌾 Gluten</label>
+      <label class="ac"><input type="checkbox" value="dairy"/> 🥛 Dairy</label>
+      <label class="ac"><input type="checkbox" value="nuts"/> 🥜 Nuts</label>
+      <label class="ac"><input type="checkbox" value="eggs"/> 🥚 Eggs</label>
+      <label class="ac"><input type="checkbox" value="sesame"/> 🫙 Sesame</label>
+      <label class="ac"><input type="checkbox" value="fish"/> 🐟 Fish</label>
+      <label class="ac"><input type="checkbox" value="spicy"/> 🌶️ Spicy</label>
+    </div>
+  </div>
+
+  <!-- Kitchen note -->
+  <div class="fg"><label class="fl">Kitchen Note</label><input class="fi" id="f-knote" placeholder="e.g. Always serve warm"/></div>
+
+  <!-- Visibility -->
+  <div class="fg">
+    <label class="fl">Visible On</label>
+    <div class="vbgroup">
+      <label class="vb ck" id="vb-both"><input type="radio" name="vis" value="both" checked/> Online + POS</label>
+      <label class="vb" id="vb-pos"><input type="radio" name="vis" value="pos"/> POS only</label>
+      <label class="vb" id="vb-online"><input type="radio" name="vis" value="online"/> Online only</label>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="fg">
+    <label class="fl">Status</label>
+    <div class="vbgroup">
+      <label class="vb ck" id="st-avail"><input type="radio" name="ist" value="available" checked/> ✅ Available</label>
+      <label class="vb" id="st-86"><input type="radio" name="ist" value="86"/> 🚫 86'd</label>
+      <label class="vb" id="st-hidden"><input type="radio" name="ist" value="hidden"/> 👁️ Hidden</label>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:6px">
+    <button class="btn bg" style="flex:1" onclick="saveItem()">Save Item</button>
+    <button class="btn bo" onclick="closeModal('item-modal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Category Modal -->
+<div class="ov" id="cat-modal">
+<div class="modal">
+  <div class="mh"></div>
+  <div class="mt2">Manage Categories</div>
+  <div id="cat-list" style="margin-bottom:14px"></div>
+  <div style="display:flex;gap:7px">
+    <input class="fi" id="new-cat" placeholder="New category name" style="flex:1"/>
+    <button class="btn bg" style="padding:0 14px;flex-shrink:0" onclick="addCategory()">Add</button>
+  </div>
+  <button class="btn bo bfull" style="margin-top:10px" onclick="closeModal('cat-modal')">Done</button>
+</div>
+</div>
+
+<!-- Assign Delivery Modal -->
+<div class="ov" id="assign-modal">
+<div class="modal">
+  <div class="mh"></div>
+  <div class="mt2">Assign Delivery</div>
+  <div id="assign-info" style="font-size:13px;color:var(--muted);padding:10px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:16px"></div>
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🛵 Our Drivers</div>
+  <div id="assign-drivers" style="margin-bottom:16px"></div>
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🚚 Third Party Companies</div>
+  <div id="assign-companies" style="margin-bottom:14px"></div>
+  <button class="btn bo bfull" onclick="closeModal('assign-modal')">Cancel</button>
+</div>
+</div>
+
+<!-- POS Checkout Modal -->
+<div class="ov" id="pos-modal">
+<div class="modal">
+  <div class="mh"></div>
+  <div class="mt2">Checkout</div>
+  <div id="pos-checkout-list"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:2px solid var(--border);margin-top:8px">
+    <div style="font-size:16px;font-weight:700">Total</div>
+    <div>
+      <div style="font-size:20px;font-weight:900;font-family:'IBM Plex Mono',monospace;color:var(--green)" id="pos-total-usd">$0.00</div>
+      <div style="font-size:12px;color:var(--muted);text-align:right" id="pos-total-lbp">0 LBP</div>
+      <div id="pos-vat-breakdown"></div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <button class="vb ck" id="pay-cash" onclick="setPay('cash',this)">💵 Cash</button>
+    <button class="vb" id="pay-card" onclick="setPay('card',this)">💳 Card</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn bg" style="flex:1" onclick="completePOS()">✅ Place Order</button>
+    <button class="btn bo" onclick="closeModal('pos-modal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Print / Send Modal -->
+<div class="ov" id="print-modal">
+<div class="modal">
+  <div class="mh"></div>
+  <div class="mt2">Print / Send</div>
+
+  <!-- Tab selector -->
+  <div style="display:flex;gap:8px;margin-bottom:16px" id="print-tabs">
+    <button class="print-tab on" onclick="switchPrintTab('receipt',this)">🧾 Receipt</button>
+    <button class="print-tab" onclick="switchPrintTab('kitchen',this)">👨‍🍳 Kitchen</button>
+    <button class="print-tab" onclick="switchPrintTab('service',this)">🛵 Service</button>
+  </div>
+
+  <!-- Preview area -->
+  <div id="print-preview"></div>
+
+  <!-- Action buttons -->
+  <div style="display:flex;gap:8px;margin-top:14px" id="print-actions"></div>
+  <button class="btn bo bfull" style="margin-top:8px" onclick="closeModal('print-modal')">Close</button>
+</div>
+</div>
+
+<!-- Hidden printable area -->
+<div id="printable" style="display:none"></div>
+
+<!-- Toast & Alert -->
+<div class="toast" id="toast"></div>
+<div class="newalert" id="newalert"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════
+const S = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+};
+
+const PINS_DEFAULT = {owner:'1111',manager:'2222',staff:'3333'};
+const CATS_DEFAULT = ['Mezze','Grills','Mains','Salads','Drinks','Desserts','Other'];
+const MENU_DEFAULT = [
+  {id:1,cat:'Mezze',name:'Hummus Beiruti',desc:'Creamy chickpea hummus with olive oil & paprika',emoji:'🫘',photo:null,lbp:45000,usd:0.50,costLbp:18000,stock:null,lowStock:null,prepTime:10,calories:320,variants:[],addons:[{name:'Extra pita',extra:5000}],allergens:['gluten','sesame'],kitchenNote:'Serve warm',visibility:'both',status:'available'},
+  {id:2,cat:'Mezze',name:'Fattoush',desc:'Fresh vegetables, toasted bread & sumac dressing',emoji:'🥗',photo:null,lbp:38000,usd:0.42,costLbp:12000,stock:null,lowStock:null,prepTime:8,calories:180,variants:[],addons:[],allergens:['gluten'],kitchenNote:'',visibility:'both',status:'available'},
+  {id:3,cat:'Grills',name:'Mixed Grill Platter',desc:'Kafta, shish tawook, lamb chops & garlic sauce',emoji:'🔥',photo:null,lbp:195000,usd:2.18,costLbp:80000,stock:10,lowStock:3,prepTime:25,calories:850,variants:[{name:'Half',extra:0},{name:'Full',extra:50000}],addons:[{name:'Extra garlic sauce',extra:8000}],allergens:[],kitchenNote:'',visibility:'both',status:'available'},
+  {id:4,cat:'Grills',name:'Shish Tawook',desc:'Marinated chicken skewers with garlic sauce & pita',emoji:'🍗',photo:null,lbp:120000,usd:1.34,costLbp:45000,stock:null,lowStock:null,prepTime:20,calories:620,variants:[],addons:[],allergens:['gluten'],kitchenNote:'',visibility:'both',status:'available'},
+  {id:5,cat:'Mains',name:'Lamb Ouzi',desc:'Slow-roasted lamb over saffron rice with almonds',emoji:'🍖',photo:null,lbp:220000,usd:2.46,costLbp:90000,stock:5,lowStock:2,prepTime:30,calories:980,variants:[],addons:[],allergens:['nuts'],kitchenNote:'Check stock daily',visibility:'both',status:'available'},
+  {id:6,cat:'Drinks',name:'Fresh Lemonade',desc:'Freshly squeezed lemon with mint & rose water',emoji:'🍋',photo:null,lbp:30000,usd:0.34,costLbp:8000,stock:null,lowStock:null,prepTime:5,calories:90,variants:[{name:'Small',extra:0},{name:'Large',extra:10000}],addons:[],allergens:[],kitchenNote:'',visibility:'both',status:'available'},
+];
+const ORDERS_DEFAULT = [
+  {id:'#1001',customer:'Ahmad Khalil',phone:'+961 70 123 456',type:'delivery',items:'Mixed Grill Platter x1, Fattoush x1',lbp:233000,usd:2.60,status:'new',time:'12 min ago',address:'Hamra, Beirut',deliveryAssignee:null,deliveryType:null,deliveryPhone:null,deliveryStatus:null},
+  {id:'#1002',customer:'Maya Nassif',phone:'+961 71 987 654',type:'takeaway',items:'Hummus Beiruti x2, Fresh Lemonade x2',lbp:150000,usd:1.68,status:'confirmed',time:'28 min ago',address:'',deliveryAssignee:null,deliveryType:null,deliveryPhone:null,deliveryStatus:null},
+  {id:'#1003',customer:'Karim Haddad',phone:'+961 76 555 333',type:'dinein',items:'Lamb Ouzi x2, Hummus Beiruti x1',lbp:485000,usd:5.42,status:'ready',time:'45 min ago',address:'Table 4',deliveryAssignee:null,deliveryType:null,deliveryPhone:null,deliveryStatus:null},
+  {id:'#1004',customer:'Lara Frem',phone:'+961 78 222 111',type:'delivery',items:'Shish Tawook x1, Fresh Lemonade x1',lbp:150000,usd:1.68,status:'delivered',time:'1h ago',address:'Achrafieh',deliveryAssignee:'Ali Hamdan',deliveryType:'staff',deliveryPhone:'+961 70 111 222',deliveryStatus:'delivered'},
+];
+const CUSTS_DEFAULT = [
+  {name:'Ahmad Khalil',phone:'+961 70 123 456',orders:5,total:1150000,color:'#c0392b'},
+  {name:'Maya Nassif',phone:'+961 71 987 654',orders:3,total:450000,color:'#2980b9'},
+  {name:'Karim Haddad',phone:'+961 76 555 333',orders:8,total:2100000,color:'#8e44ad'},
+  {name:'Lara Frem',phone:'+961 78 222 111',orders:2,total:300000,color:'#27ae60'},
+];
+const DRIVERS_DEFAULT = [{name:'Ali Hamdan',phone:'+961 70 111 222'},{name:'Charbel Khoury',phone:'+961 71 333 444'}];
+const COMPANIES_DEFAULT = [{name:'Flash Delivery',phone:'+961 3 555 666'},{name:'Roadie Lebanon',phone:'+961 3 777 888'}];
+
+const getPins = ()=>S.get('do_pins',PINS_DEFAULT);
+const getCats = ()=>S.get('do_cats',CATS_DEFAULT);
+const getMenu = ()=>S.get('do_menu',MENU_DEFAULT);
+const getOrders = ()=>S.get('do_orders',ORDERS_DEFAULT);
+const getCusts = ()=>S.get('do_custs',CUSTS_DEFAULT);
+const getDrivers = ()=>S.get('do_drivers',DRIVERS_DEFAULT);
+const getCompanies = ()=>S.get('do_companies',COMPANIES_DEFAULT);
+const getRate = ()=>parseInt(document.getElementById('s-rate')?.value||89500)||89500;
+const getVAT = ()=>parseFloat(document.getElementById('s-vat')?.value||11)||11;
+const getRestName = ()=>document.getElementById('s-name')?.value||'Our Restaurant';
+const getRestAddr = ()=>document.getElementById('s-addr')?.value||'Restaurant Address';
+
+// VAT breakdown helper (prices are VAT-inclusive)
+function vatBreakdown(totalLBP){
+  const rate = getVAT()/100;
+  const net = totalLBP / (1 + rate);
+  const vat = totalLBP - net;
+  return { net: Math.round(net), vat: Math.round(vat), total: totalLBP, rate: getVAT() };
+}
+
+// ═══════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════
+let role = 'owner';
+function selRole(r,el){ role=r; document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); }
+function login(){
+  const stored = S.get('do_pins', null);
+  const pins = stored || {owner:'1111',manager:'2222',staff:'3333'};
+  const pin = document.getElementById('pinIn').value.trim();
+  if(pin===pins[role]){
+    document.getElementById('lerr').style.display='none';
+    document.getElementById('loginScreen').style.display='none';
+    const app=document.getElementById('app');
+    app.style.display='flex'; app.style.flexDirection='column';
+    initApp();
+  } else {
+    document.getElementById('lerr').style.display='block';
+    document.getElementById('pinIn').value='';
+  }
+}
+function logout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('pinIn').value='';
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function initApp(){
+  const badge = document.getElementById('rbadge');
+  badge.textContent = {owner:'👑 Owner',manager:'👨‍💼 Manager',staff:'👨‍🍳 Staff'}[role];
+  badge.className = 'rbadge '+role;
+  if(role==='staff'){ document.getElementById('ni-customers').style.display='none'; document.getElementById('ni-settings').style.display='none'; }
+  const h=new Date().getHours();
+  document.getElementById('greet').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+' 👋';
+  document.getElementById('ddate').textContent=new Date().toLocaleDateString('en-LB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('wk-card').style.display=role==='owner'?'block':'none';
+  renderDriversList(); renderCompaniesList();
+  nav('home');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function nav(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('on');
+  document.getElementById('ni-'+pg).classList.add('on');
+  document.getElementById('pcbar').classList.remove('on');
+  if(pg==='home') renderDash();
+  if(pg==='orders') renderOrders();
+  if(pg==='menu') renderMenu();
+  if(pg==='customers') renderCusts();
+  if(pg==='settings') renderDriversList(),renderCompaniesList();
+  if(pg==='pos'){ renderPOS(); updatePCBar(); }
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function fmtLBP(n){ return Number(n).toLocaleString('en-US')+' LBP'; }
+function fmtUSD(n){ return '$'+Number(n).toFixed(2); }
+function toast(msg,col='var(--green)'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=col; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2600);
+}
+function openModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function renderDash(){
+  const orders=getOrders(), custs=getCusts();
+  const today=orders.filter(o=>o.status!=='');
+  const revUSD=today.reduce((s,o)=>s+(o.usd||0),0);
+  const revLBP=today.reduce((s,o)=>s+(o.lbp||0),0);
+  const pend=orders.filter(o=>o.status==='new'||o.status==='confirmed').length;
+  document.getElementById('st-orders').textContent=today.length;
+  document.getElementById('st-rev').textContent=fmtUSD(revUSD);
+  document.getElementById('st-revlbp').textContent=fmtLBP(revLBP);
+  document.getElementById('st-pend').textContent=pend;
+  document.getElementById('st-custs').textContent=custs.length;
+  const ob=document.getElementById('obadge');
+  if(pend>0){ob.textContent=pend;ob.classList.add('on');}else ob.classList.remove('on');
+  if(role==='owner'){
+    document.getElementById('wk-rev').textContent=fmtUSD(revUSD*7);
+    document.getElementById('wk-ord').textContent=today.length*7;
+    document.getElementById('wk-avg').textContent=today.length?fmtUSD(revUSD/today.length):'$0';
+  }
+  const latest=orders.slice(0,3);
+  document.getElementById('dash-orders').innerHTML=latest.length?latest.map(o=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:14px;font-weight:600">${o.customer}</div><div style="font-size:11px;color:var(--muted)">${o.id} · ${o.time}</div></div>
+      <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--green)">${fmtUSD(o.usd)}</div><div style="font-size:11px;color:var(--muted)">${slabel(o.status)}</div></div>
+    </div>`).join(''):'<div class="empty"><div class="eico">🧾</div><p>No orders yet</p></div>';
+}
+
+// ═══════════════════════════════════════
+// ORDERS
+// ═══════════════════════════════════════
+let oFilter='all';
+function slabel(s){ return {new:'🟡 New',confirmed:'🔵 Confirmed',ready:'🟢 Ready',delivered:'✅ Delivered'}[s]||s; }
+function filterO(f,el){ oFilter=f; document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on')); el.classList.add('on'); renderOrders(); }
+
+function renderOrders(){
+  let orders=getOrders();
+  if(oFilter!=='all') orders=orders.filter(o=>o.status===oFilter);
+  const el=document.getElementById('orders-list');
+  if(!orders.length){ el.innerHTML='<div class="empty"><div class="eico">🧾</div><p>No orders here</p></div>'; return; }
+  el.innerHTML=orders.map(o=>{
+    const isD=o.type==='delivery';
+    const dbar=isD?`<div class="dbar">${o.deliveryAssignee?`
+      <div class="dassigned">
+        <span style="font-size:20px">${o.deliveryType==='staff'?'🛵':'🚚'}</span>
+        <div><div style="font-size:13px;font-weight:700">${o.deliveryAssignee}</div><div style="font-size:11px;color:var(--muted)">${o.deliveryType==='staff'?'Our Driver':'Third Party'}</div></div>
+        <div class="dpills">
+          <button class="dp ${o.deliveryStatus==='pending'?'pa':''}" onclick="setDS('${o.id}','pending')">Pending</button>
+          <button class="dp ${o.deliveryStatus==='pickedup'?'pb':''}" onclick="setDS('${o.id}','pickedup')">Picked Up</button>
+          <button class="dp ${o.deliveryStatus==='delivered'?'pg':''}" onclick="setDS('${o.id}','delivered')">Delivered</button>
+        </div>
+      </div>`:`<button class="assign-btn" onclick="openAssign('${o.id}')">🚚 Assign Delivery</button>`}</div>`:''
+    ;
+    return `<div class="ocard ${o.status}">
+      <div class="otop">
+        <div><div class="oid">${o.id}</div><div class="otime">${o.time}</div></div>
+        <span class="otype ${o.type}">${o.type==='dinein'?'Dine-in':o.type.charAt(0).toUpperCase()+o.type.slice(1)}</span>
+      </div>
+      <div class="ocust">${o.customer} · ${o.phone}</div>
+      ${o.address?`<div class="oaddr">📍 ${o.address}</div>`:''}
+      <div class="oitems">${o.items}</div>
+      ${dbar}
+      <div class="ofooter">
+        <div class="ototal">${fmtUSD(o.usd)}<small>${fmtLBP(o.lbp)}</small></div>
+        <div class="oactions">
+          <button class="wabtn" onclick="openPrintModal('${o.id}')" title="Print / Send">🖨️</button>
+          <button class="wabtn" onclick="waCustomer('${o.customer}','${o.phone}','${o.status}')">💬</button>
+          <select class="ssel" onchange="setOS('${o.id}',this.value)">
+            <option value="new" ${o.status==='new'?'selected':''}>🟡 New</option>
+            <option value="confirmed" ${o.status==='confirmed'?'selected':''}>🔵 Confirmed</option>
+            <option value="ready" ${o.status==='ready'?'selected':''}>🟢 Ready</option>
+            <option value="delivered" ${o.status==='delivered'?'selected':''}>✅ Done</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setOS(id,status){
+  const orders=getOrders(), o=orders.find(x=>x.id===id);
+  if(o){o.status=status;S.set('do_orders',orders);}
+  renderDash(); renderOrders(); toast('Order '+id+' → '+slabel(status));
+}
+function setDS(id,ds){
+  const orders=getOrders(), o=orders.find(x=>x.id===id);
+  if(o){o.deliveryStatus=ds; if(ds==='delivered') o.status='delivered'; S.set('do_orders',orders);}
+  renderOrders(); renderDash();
+  toast({pending:'⏳ Pending',pickedup:'🛵 Picked Up',delivered:'✅ Delivered'}[ds]||ds);
+}
+function waCustomer(name,phone,status){
+  const msgs={confirmed:`Hi ${name}! ✅ Your order is confirmed, we're preparing it now.`,ready:`Hi ${name}! 🟢 Your order is ready!`,delivered:`Hi ${name}! Thank you for your order 🙏`};
+  const msg=msgs[status]||`Hi ${name}! Update on your order.`;
+  window.open('https://wa.me/'+phone.replace(/[\s+]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+let demoN=1005;
+function demoOrder(){
+  const orders=getOrders();
+  const names=['Hassan Moussa','Nour Khalaf','Sara Hreiz','Dani Nassar'];
+  const types=['delivery','takeaway','dinein'];
+  const items=['Hummus Beiruti x2, Lemonade x1','Mixed Grill x1, Fattoush x1','Shish Tawook x2','Lamb Ouzi x1'];
+  const prices=[{lbp:135000,usd:1.51},{lbp:233000,usd:2.60},{lbp:240000,usd:2.68},{lbp:220000,usd:2.46}];
+  const i=Math.floor(Math.random()*4);
+  const t=types[Math.floor(Math.random()*3)];
+  const o={id:'#'+demoN++,customer:names[i],phone:'+961 7'+Math.floor(Math.random()*9)+' '+Math.floor(Math.random()*900+100)+' '+Math.floor(Math.random()*900+100),type:t,items:items[i],...prices[i],status:'new',time:'Just now',address:t==='delivery'?'Verdun, Beirut':t==='dinein'?'Table '+Math.ceil(Math.random()*8):'',deliveryAssignee:null,deliveryType:null,deliveryPhone:null,deliveryStatus:null};
+  orders.unshift(o); S.set('do_orders',orders);
+  // add customer
+  const custs=getCusts();
+  if(!custs.find(c=>c.name===o.customer)){ custs.unshift({name:o.customer,phone:o.phone,orders:1,total:o.lbp,color:['#c0392b','#2980b9','#8e44ad','#27ae60'][Math.floor(Math.random()*4)]}); S.set('do_custs',custs); }
+  const al=document.getElementById('newalert'); al.textContent='🔔 New order: '+o.customer; al.classList.add('on'); setTimeout(()=>al.classList.remove('on'),4000);
+  renderDash(); renderOrders(); toast('New order! 🎉',var_amber);
+}
+const var_amber='var(--amber)';
+
+// ═══════════════════════════════════════
+// DELIVERY ASSIGNMENT
+// ═══════════════════════════════════════
+let assignOId=null;
+function openAssign(id){
+  assignOId=id;
+  const orders=getOrders(), o=orders.find(x=>x.id===id);
+  document.getElementById('assign-info').textContent=id+' · '+o.customer+' · 📍 '+(o.address||'—');
+  const drivers=getDrivers(), companies=getCompanies();
+  document.getElementById('assign-drivers').innerHTML=drivers.length?drivers.map(d=>`
+    <div class="arow"><div class="aav" style="background:#2980b9;font-size:18px">🛵</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600">${d.name}</div><div style="font-size:12px;color:var(--muted)">${d.phone}</div></div>
+    <button class="btn bg" style="padding:6px 13px;font-size:13px" onclick="doAssign('staff','${d.name}','${d.phone}')">Assign</button></div>`).join('')
+    :'<div style="font-size:13px;color:var(--muted);padding:8px 0">No drivers yet. Add in Settings.</div>';
+  document.getElementById('assign-companies').innerHTML=companies.length?companies.map(c=>`
+    <div class="arow"><div class="aav" style="background:#8e44ad;font-size:18px">🚚</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.phone}</div></div>
+    <button class="btn bo" style="padding:6px 13px;font-size:13px" onclick="doAssign('company','${c.name}','${c.phone}')">Assign</button></div>`).join('')
+    :'<div style="font-size:13px;color:var(--muted);padding:8px 0">No companies yet. Add in Settings.</div>';
+  openModal('assign-modal');
+}
+function doAssign(type,name,phone){
+  const orders=getOrders(), o=orders.find(x=>x.id===assignOId); if(!o) return;
+  o.deliveryType=type; o.deliveryAssignee=name; o.deliveryPhone=phone; o.deliveryStatus='pending'; o.status='confirmed';
+  S.set('do_orders',orders);
+  const isStaff=type==='staff';
+  const msg=isStaff
+    ?`🛵 *Delivery Assignment*\n\nOrder: ${o.id}\nCustomer: ${o.customer}\nPhone: ${o.phone}\n📍 Drop: ${o.address||'—'}\n\nItems: ${o.items}\n\nTotal: ${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}\n\n✅ Please confirm!`
+    :`🚚 *Delivery Request — ${getRestName()}*\n\nOrder: ${o.id}\n\n📦 Pickup:\n${getRestName()}\n${getRestAddr()}\n\n📍 Drop-off:\n${o.customer}\n${o.address||'—'}\nPhone: ${o.phone}\n\nItems: ${o.items}\n\nTotal: ${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}\n\n⏱ Please confirm availability!`;
+  window.open('https://wa.me/'+phone.replace(/[\s+]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  closeModal('assign-modal'); renderOrders(); renderDash(); toast('Assigned to '+name+' 🚚');
+}
+
+// ═══════════════════════════════════════
+// MENU
+// ═══════════════════════════════════════
+function renderMenu(){
+  const menu=getMenu(), cats=getCats().filter(c=>menu.some(i=>i.cat===c));
+  const canEdit=role==='owner'||role==='manager';
+  const el=document.getElementById('menu-list');
+  if(!menu.length){ el.innerHTML='<div class="empty"><div class="eico">🍽️</div><p>No items yet</p></div>'; return; }
+  el.innerHTML=cats.map(cat=>{
+    const items=menu.filter(i=>i.cat===cat);
+    return `<div class="card"><div class="cat-header"><div class="cat-name">${cat}</div><span style="font-size:12px;color:var(--muted)">${items.length} items</span></div>
+    ${items.map(item=>{
+      const margin=item.costLbp&&item.lbp?Math.round((1-item.costLbp/item.lbp)*100):null;
+      const stockLow=item.stock!=null&&item.lowStock!=null&&item.stock<=item.lowStock;
+      const img=item.photo?`<img src="${item.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>`:item.emoji||'🍽️';
+      return `<div class="mrow">
+        <div class="mimg">${img}</div>
+        <div class="minfo">
+          <div class="mname">${item.name}${item.status==='86'?' <span style="color:var(--red);font-size:10px;font-weight:700">86\'d</span>':''}</div>
+          <div class="mprice">${fmtUSD(item.usd)} · ${item.lbp.toLocaleString()} LBP</div>
+          <div class="mtags">
+            ${item.costLbp?`<span class="mt cost">Cost: ${item.costLbp.toLocaleString()} LBP</span>`:''}
+            ${margin!=null?`<span class="mt margin">${margin}% margin</span>`:''}
+            ${item.stock!=null?`<span class="mt ${stockLow?'low':'stock'}">Stock: ${item.stock}${stockLow?' ⚠️':''}</span>`:''}
+            ${item.prepTime?`<span class="mt prep">⏱ ${item.prepTime}m</span>`:''}
+            ${item.calories?`<span class="mt cal">🔥 ${item.calories} kcal</span>`:''}
+            ${(item.allergens||[]).map(a=>`<span class="mt low">${a}</span>`).join('')}
+          </div>
+        </div>
+        ${canEdit?`<div class="macts">
+          <button class="tog ${item.status!=='86'?'on':'off'}" onclick="toggleItem(${item.id})" title="Toggle available"></button>
+          <button class="ib" onclick="openItemModal(${item.id})">✏️</button>
+          <button class="ib del" onclick="deleteItem(${item.id})">🗑️</button>
+        </div>`:''}
+      </div>`;
+    }).join('')}</div>`;
+  }).join('');
+}
+
+function toggleItem(id){
+  const menu=getMenu(), item=menu.find(i=>i.id===id); if(!item) return;
+  item.status=item.status==='86'?'available':'86';
+  S.set('do_menu',menu); renderMenu(); toast(item.name+': '+(item.status==='86'?"86'd":"Available"));
+}
+function deleteItem(id){
+  if(!confirm('Delete this item?')) return;
+  S.set('do_menu',getMenu().filter(i=>i.id!==id)); renderMenu(); toast('Item deleted');
+}
+
+// ═══════════════════════════════════════
+// ITEM MODAL
+// ═══════════════════════════════════════
+let editId=null, photoData=null, usdManual=false;
+
+function onPhotoChange(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    photoData=ev.target.result;
+    const prev=document.getElementById('photo-prev');
+    prev.innerHTML='<img src="'+photoData+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px"/><input type="file" id="photo-file" accept="image/*" style="display:none" onchange="onPhotoChange(event)"/>';
+    toast('Photo uploaded ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function onEmojiInput(){
+  const v=document.getElementById('f-emoji').value;
+  if(!photoData){
+    const prev=document.getElementById('photo-prev');
+    prev.querySelector('span') ? prev.querySelector('span').textContent=v||'🍽️' : null;
+    document.getElementById('photo-emoji-show').textContent=v||'🍽️';
+  }
+}
+
+function parseLBP(str){ return parseInt(str.replace(/[,\s]/g,''))||0; }
+function formatLBP(n){ return n?Number(n).toLocaleString('en-US'):''; }
+
+function onLBPInput(){
+  const raw=document.getElementById('f-lbp').value.replace(/[,\s]/g,'');
+  const n=parseInt(raw)||0;
+  // reformat with commas
+  if(n>0) document.getElementById('f-lbp').value=n.toLocaleString('en-US');
+  // auto sync USD if not manually set
+  if(!usdManual && n>0){ document.getElementById('f-usd').value=(n/getRate()).toFixed(2); }
+  calcMargin();
+}
+
+function onCostInput(){
+  const raw=document.getElementById('f-cost').value.replace(/[,\s]/g,'');
+  const n=parseInt(raw)||0;
+  if(n>0) document.getElementById('f-cost').value=n.toLocaleString('en-US');
+  calcMargin();
+}
+
+function calcMargin(){
+  const sell=parseLBP(document.getElementById('f-lbp').value);
+  const cost=parseLBP(document.getElementById('f-cost').value);
+  const el=document.getElementById('f-margin');
+  if(sell>0&&cost>0){
+    const m=Math.round((1-cost/sell)*100);
+    el.textContent=m+'%';
+    el.style.color=m>=50?'var(--green)':m>=25?'var(--amber)':'var(--red)';
+  } else { el.textContent='—'; el.style.color='var(--muted)'; }
+}
+
+let varN=0,adN=0;
+function addVariantRow(name='',extra=0){
+  varN++;
+  const d=document.createElement('div'); d.className='drow'; d.id='vr-'+varN;
+  d.innerHTML=`<input class="fi" placeholder="Name e.g. Large" value="${name}"/><input class="fi" type="number" placeholder="Extra LBP" value="${extra||''}"/><button class="xrow" onclick="document.getElementById('vr-${varN}').remove()">×</button>`;
+  document.getElementById('variants-wrap').appendChild(d);
+}
+function addAddonRow(name='',extra=0){
+  adN++;
+  const d=document.createElement('div'); d.className='drow'; d.id='ad-'+adN;
+  d.innerHTML=`<input class="fi" placeholder="e.g. Extra garlic sauce" value="${name}"/><input class="fi" type="number" placeholder="Extra LBP" value="${extra||''}"/><button class="xrow" onclick="document.getElementById('ad-${adN}').remove()">×</button>`;
+  document.getElementById('addons-wrap').appendChild(d);
+}
+
+function populateCatSelect(){
+  const cats=getCats(), sel=document.getElementById('f-cat'); if(!sel) return;
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function openItemModal(id){
+  editId=id; photoData=null; usdManual=false; varN=0; adN=0;
+  document.getElementById('item-modal-title').textContent=id?'Edit Item':'Add Menu Item';
+  populateCatSelect();
+  // reset allergen checkboxes visual
+  document.querySelectorAll('#allergens-wrap .ac').forEach(a=>{ a.classList.remove('ck'); a.querySelector('input').checked=false; });
+  // reset vis/status radio visual
+  document.querySelectorAll('.vb').forEach(v=>v.classList.remove('ck'));
+  document.querySelector('label[id="vb-both"]').classList.add('ck');
+  document.querySelector('label[id="st-avail"]').classList.add('ck');
+  document.querySelector('input[name="vis"][value="both"]').checked=true;
+  document.querySelector('input[name="ist"][value="available"]').checked=true;
+  // reset photo preview
+  document.getElementById('photo-prev').innerHTML='<span id="photo-emoji-show">🍽️</span><input type="file" id="photo-file" accept="image/*" style="display:none" onchange="onPhotoChange(event)"/>';
+  // reset fields
+  ['f-emoji','f-name','f-desc','f-lbp','f-usd','f-cost','f-stock','f-lowstock','f-prep','f-cal','f-knote'].forEach(i=>{ const el=document.getElementById(i); if(el) el.value=''; });
+  document.getElementById('f-margin').textContent='—'; document.getElementById('f-margin').style.color='var(--muted)';
+  document.getElementById('variants-wrap').innerHTML='';
+  document.getElementById('addons-wrap').innerHTML='';
+
+  if(id){
+    const item=getMenu().find(i=>i.id===id); if(!item) return;
+    document.getElementById('f-cat').value=item.cat;
+    document.getElementById('f-name').value=item.name;
+    document.getElementById('f-desc').value=item.desc||'';
+    document.getElementById('f-emoji').value=item.emoji||'';
+    document.getElementById('f-lbp').value=item.lbp?item.lbp.toLocaleString('en-US'):'';
+    document.getElementById('f-usd').value=item.usd||'';
+    document.getElementById('f-cost').value=item.costLbp?item.costLbp.toLocaleString('en-US'):'';
+    document.getElementById('f-stock').value=item.stock!=null?item.stock:'';
+    document.getElementById('f-lowstock').value=item.lowStock!=null?item.lowStock:'';
+    document.getElementById('f-prep').value=item.prepTime||'';
+    document.getElementById('f-cal').value=item.calories||'';
+    document.getElementById('f-knote').value=item.kitchenNote||'';
+    calcMargin();
+    // photo/emoji
+    if(item.photo){
+      photoData=item.photo;
+      document.getElementById('photo-prev').innerHTML='<img src="'+item.photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px"/><input type="file" id="photo-file" accept="image/*" style="display:none" onchange="onPhotoChange(event)"/>';
+    } else {
+      document.getElementById('photo-emoji-show').textContent=item.emoji||'🍽️';
+    }
+    // variants
+    (item.variants||[]).forEach(v=>addVariantRow(v.name,v.extra));
+    // addons
+    (item.addons||[]).forEach(a=>addAddonRow(a.name,a.extra));
+    // allergens
+    (item.allergens||[]).forEach(al=>{
+      document.querySelectorAll('#allergens-wrap .ac input').forEach(inp=>{ if(inp.value===al){inp.checked=true;inp.parentElement.classList.add('ck');} });
+    });
+    // vis
+    document.querySelectorAll('.vb').forEach(v=>v.classList.remove('ck'));
+    const vis=item.visibility||'both';
+    const vr=document.querySelector('input[name="vis"][value="'+vis+'"]'); if(vr){vr.checked=true;vr.parentElement.classList.add('ck');}
+    // status
+    const st=item.status||'available';
+    const sr=document.querySelector('input[name="ist"][value="'+st+'"]'); if(sr){sr.checked=true;sr.parentElement.classList.add('ck');}
+  }
+  openModal('item-modal');
+}
+
+// Keep radio+checkbox labels visually in sync
+document.addEventListener('change',e=>{
+  if(e.target.name==='vis'||e.target.name==='ist'){
+    const grp=e.target.name==='vis'?document.querySelectorAll('.vb'):document.querySelectorAll('.vb');
+    // find siblings by name
+    document.querySelectorAll('input[name="'+e.target.name+'"]').forEach(r=>r.parentElement.classList.remove('ck'));
+    e.target.parentElement.classList.add('ck');
+  }
+  if(e.target.closest('#allergens-wrap')){
+    e.target.parentElement.classList.toggle('ck',e.target.checked);
+  }
+});
+
+function saveItem(){
+  const name=document.getElementById('f-name').value.trim();
+  const lbp=parseLBP(document.getElementById('f-lbp').value);
+  const usd=parseFloat(document.getElementById('f-usd').value)||0;
+  if(!name){ toast('Item name is required','var(--red)'); return; }
+  if(!lbp&&!usd){ toast('Enter a selling price','var(--red)'); return; }
+  // collect variants
+  const variants=[]; document.querySelectorAll('#variants-wrap .drow').forEach(row=>{
+    const ins=row.querySelectorAll('input'); const n=ins[0]?.value.trim(); const x=parseInt(ins[1]?.value)||0;
+    if(n) variants.push({name:n,extra:x});
+  });
+  // collect addons
+  const addons=[]; document.querySelectorAll('#addons-wrap .drow').forEach(row=>{
+    const ins=row.querySelectorAll('input'); const n=ins[0]?.value.trim(); const x=parseInt(ins[1]?.value)||0;
+    if(n) addons.push({name:n,extra:x});
+  });
+  const allergens=[...document.querySelectorAll('#allergens-wrap input:checked')].map(i=>i.value);
+  const vis=document.querySelector('input[name="vis"]:checked')?.value||'both';
+  const st=document.querySelector('input[name="ist"]:checked')?.value||'available';
+  const costLbp=parseLBP(document.getElementById('f-cost').value)||null;
+  const stockV=document.getElementById('f-stock').value; const lowV=document.getElementById('f-lowstock').value;
+  const item={
+    id:editId||Date.now(),
+    cat:document.getElementById('f-cat').value,
+    name, desc:document.getElementById('f-desc').value,
+    emoji:document.getElementById('f-emoji').value||'🍽️',
+    photo:photoData||null,
+    lbp, usd:usd||(lbp/getRate()),
+    costLbp, stock:stockV!==''?parseInt(stockV):null, lowStock:lowV!==''?parseInt(lowV):null,
+    prepTime:parseInt(document.getElementById('f-prep').value)||null,
+    calories:parseInt(document.getElementById('f-cal').value)||null,
+    variants, addons, allergens, kitchenNote:document.getElementById('f-knote').value,
+    visibility:vis, status:st,
+  };
+  const menu=getMenu();
+  if(editId){ const idx=menu.findIndex(i=>i.id===editId); if(idx>-1) menu[idx]=item; else menu.push(item); }
+  else menu.push(item);
+  S.set('do_menu',menu);
+  closeModal('item-modal'); renderMenu();
+  toast((editId?'Updated':'Added')+': '+name);
+}
+
+// ═══════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════
+function openCatModal(){ renderCatList(); openModal('cat-modal'); }
+function renderCatList(){
+  const cats=getCats();
+  document.getElementById('cat-list').innerHTML=cats.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input class="fi" style="flex:1;padding:7px 10px" value="${c}" id="ce-${i}"/>
+      <button class="ib" onclick="renamecat(${i})" title="Save rename">✓</button>
+      <button class="ib del" onclick="deletecat(${i})" title="Delete">🗑️</button>
+    </div>`).join('');
+}
+function addCategory(){
+  const v=document.getElementById('new-cat').value.trim(); if(!v){toast('Enter a name','var(--red)');return;}
+  const cats=getCats(); if(cats.includes(v)){toast('Already exists','var(--red)');return;}
+  cats.push(v); S.set('do_cats',cats); document.getElementById('new-cat').value='';
+  renderCatList(); populateCatSelect(); toast('Category added: '+v);
+}
+function renamecat(i){
+  const cats=getCats(); const nv=document.getElementById('ce-'+i)?.value.trim(); if(!nv) return;
+  const old=cats[i]; cats[i]=nv; S.set('do_cats',cats);
+  const menu=getMenu(); menu.forEach(m=>{if(m.cat===old)m.cat=nv;}); S.set('do_menu',menu);
+  renderCatList(); populateCatSelect(); renderMenu(); toast('Renamed to: '+nv);
+}
+function deletecat(i){
+  const cats=getCats(); if(!confirm('Delete "'+cats[i]+'"? Items move to Other.')) return;
+  const old=cats[i]; cats.splice(i,1); S.set('do_cats',cats);
+  const menu=getMenu(); menu.forEach(m=>{if(m.cat===old)m.cat='Other';}); S.set('do_menu',menu);
+  renderCatList(); populateCatSelect(); renderMenu(); toast('Category deleted');
+}
+
+// ═══════════════════════════════════════
+// POS
+// ═══════════════════════════════════════
+let posCart={}, posType='dinein', posPay='cash', posCat=null;
+
+function setPT(type,el){
+  posType=type;
+  document.querySelectorAll('.ptbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  const label={dinein:'Table number',takeaway:'Customer name',delivery:'Customer name & address'};
+  document.getElementById('pos-ctx-label').textContent=label[type];
+  document.getElementById('pos-ctx').placeholder={dinein:'e.g. Table 4',takeaway:'e.g. Ahmad',delivery:'e.g. Ahmad, Hamra Street'}[type];
+}
+
+function renderPOS(){
+  const menu=getMenu().filter(i=>i.status!=='hidden'&&i.visibility!=='online');
+  const cats=[...new Set(menu.map(i=>i.cat))];
+  if(!posCat||!cats.includes(posCat)) posCat=cats[0]||null;
+  document.getElementById('pos-cats').innerHTML=cats.map(c=>`<button class="fc ${c===posCat?'on':''}" onclick="setPCat('${c}',this)">${c}</button>`).join('');
+  const items=menu.filter(i=>i.cat===posCat);
+  document.getElementById('pos-grid').innerHTML=items.map(item=>{
+    const qty=posCart[item.id]||0;
+    const img=item.photo?`<img src="${item.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>`:item.emoji||'🍽️';
+    return `<div class="pi ${qty>0?'incart':''} ${item.status==='86'?'unavail':''}" onclick="posAdd(${item.id})">
+      ${qty>0?`<div class="piqty">${qty}</div>`:''}
+      <div class="pi-img">${img}</div>
+      <div class="piname">${item.name}</div>
+      <div class="piprice">${fmtUSD(item.usd)}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${item.lbp.toLocaleString()} LBP</div>
+    </div>`;
+  }).join('');
+}
+
+function setPCat(cat){ posCat=cat; renderPOS(); }
+function posAdd(id){ posCart[id]=(posCart[id]||0)+1; renderPOS(); updatePCBar(); }
+function posQty(id,d){ posCart[id]=(posCart[id]||0)+d; if(posCart[id]<=0) delete posCart[id]; renderPOS(); updatePCBar(); if(document.getElementById('pos-modal').classList.contains('on')) renderPosCheckout(); }
+function updatePCBar(){
+  const menu=getMenu(), ids=Object.keys(posCart).map(Number);
+  const count=ids.reduce((s,id)=>s+posCart[id],0);
+  const total=ids.reduce((s,id)=>{const it=menu.find(i=>i.id===id);return s+(it?it.usd*posCart[id]:0);},0);
+  document.getElementById('pc-count').textContent=count+(count===1?' item':' items');
+  document.getElementById('pc-total').textContent=fmtUSD(total);
+  document.getElementById('pcbar').classList.toggle('on',count>0&&document.getElementById('pg-pos').classList.contains('on'));
+}
+
+function setPay(p,el){ posPay=p; document.querySelectorAll('#pos-modal .vb').forEach(b=>b.classList.remove('ck')); el.classList.add('ck'); }
+
+function openPosCheckout(){ renderPosCheckout(); openModal('pos-modal'); }
+function renderPosCheckout(){
+  const menu=getMenu(), ids=Object.keys(posCart).map(Number);
+  const totalUSD=ids.reduce((s,id)=>{const it=menu.find(i=>i.id===id);return s+(it?it.usd*posCart[id]:0);},0);
+  const totalLBP=ids.reduce((s,id)=>{const it=menu.find(i=>i.id===id);return s+(it?it.lbp*posCart[id]:0);},0);
+  document.getElementById('pos-checkout-list').innerHTML=ids.map(id=>{
+    const it=menu.find(i=>i.id===id); if(!it) return '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:22px">${it.emoji||'🍽️'}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">${it.name}</div><div style="font-size:12px;color:var(--muted)">${fmtUSD(it.usd)} each</div></div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <button class="ib" onclick="posQty(${id},-1)" style="font-size:18px;font-weight:700">−</button>
+        <span style="font-weight:700;min-width:18px;text-align:center">${posCart[id]}</span>
+        <button class="ib" onclick="posQty(${id},1)" style="font-size:18px;font-weight:700">+</button>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--green);min-width:60px;text-align:right">${fmtUSD(it.usd*posCart[id])}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('pos-total-usd').textContent=fmtUSD(totalUSD);
+  document.getElementById('pos-total-lbp').textContent=fmtLBP(totalLBP);
+  // VAT breakdown
+  const vat=vatBreakdown(totalLBP);
+  const vatEl=document.getElementById('pos-vat-breakdown');
+  if(vatEl) vatEl.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-top:4px">Net: ${vat.net.toLocaleString()} LBP &nbsp;|&nbsp; VAT ${vat.rate}%: ${vat.vat.toLocaleString()} LBP</div>`;
+}
+
+function completePOS(){
+  const menu=getMenu(), ids=Object.keys(posCart).map(Number); if(!ids.length) return;
+  const totalUSD=ids.reduce((s,id)=>{const it=menu.find(i=>i.id===id);return s+(it?it.usd*posCart[id]:0);},0);
+  const totalLBP=ids.reduce((s,id)=>{const it=menu.find(i=>i.id===id);return s+(it?it.lbp*posCart[id]:0);},0);
+  const itemsStr=ids.map(id=>{const it=menu.find(i=>i.id===id);return it?it.name+' x'+posCart[id]:''}).filter(Boolean).join(', ');
+  const ctx=document.getElementById('pos-ctx').value.trim()||'Counter';
+  const orders=getOrders();
+  orders.unshift({id:'#'+(1000+orders.length+1),customer:ctx,phone:'—',type:posType,items:itemsStr,lbp:totalLBP,usd:totalUSD,status:'confirmed',time:'Just now',address:posType==='dinein'?ctx:'Counter',payment:posPay,deliveryAssignee:null,deliveryType:null,deliveryPhone:null,deliveryStatus:null});
+  S.set('do_orders',orders);
+  posCart={}; document.getElementById('pos-ctx').value='';
+  closeModal('pos-modal'); renderPOS(); updatePCBar(); renderDash();
+  toast('✅ Order placed!');
+}
+
+// ═══════════════════════════════════════
+// CUSTOMERS
+// ═══════════════════════════════════════
+function renderCusts(){
+  const custs=getCusts(), el=document.getElementById('custs-list');
+  if(!custs.length){ el.innerHTML='<div class="empty"><div class="eico">👥</div><p>No customers yet</p></div>'; return; }
+  el.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${custs.length} customers in your direct database</div>
+  <div class="card">${custs.map(c=>`
+    <div class="crow">
+      <div class="cav" style="background:${c.color}">${c.name.charAt(0)}</div>
+      <div class="cinfo">
+        <div class="cname">${c.name}</div>
+        <div class="cmeta">${c.phone} · ${c.orders} orders</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:var(--green)">${fmtUSD(c.total/getRate())}</div>
+        <div style="font-size:11px;color:var(--muted)">${fmtLBP(c.total)}</div>
+        <button onclick="waC('${c.name}','${c.phone}')" style="margin-top:5px;background:var(--gdim);color:var(--green);border:1px solid var(--green);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">💬 WA</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function waC(name,phone){ window.open('https://wa.me/'+phone.replace(/[\s+]/g,'')+'?text='+encodeURIComponent('Hi '+name+'! We have a special offer for you today 🎉'),'_blank'); }
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+function saveSettings(){ toast('Settings saved ✓'); }
+function savePins(){
+  const pins=getPins();
+  const o=document.getElementById('p-owner').value, m=document.getElementById('p-mgr').value, st=document.getElementById('p-staff').value;
+  if(o.length===4) pins.owner=o; if(m.length===4) pins.manager=m; if(st.length===4) pins.staff=st;
+  S.set('do_pins',pins);
+  ['p-owner','p-mgr','p-staff'].forEach(id=>document.getElementById(id).value='');
+  toast('PINs updated ✓');
+}
+function renderDriversList(){
+  const el=document.getElementById('drivers-list'); if(!el) return;
+  const drivers=getDrivers();
+  el.innerHTML=drivers.length?drivers.map((d,i)=>`
+    <div class="arow"><div class="aav" style="background:#2980b9;font-size:18px">🛵</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600">${d.name}</div><div style="font-size:12px;color:var(--muted)">${d.phone}</div></div>
+    <button class="ib del" onclick="removeDriver(${i})">🗑️</button></div>`).join('')
+    :'<div style="font-size:13px;color:var(--muted);padding:8px 0">No drivers yet.</div>';
+}
+function addDriver(){
+  const n=document.getElementById('nd-name').value.trim(), p=document.getElementById('nd-phone').value.trim();
+  if(!n||!p){toast('Enter name and phone','var(--red)');return;}
+  const d=getDrivers(); d.push({name:n,phone:p}); S.set('do_drivers',d);
+  document.getElementById('nd-name').value=''; document.getElementById('nd-phone').value='';
+  renderDriversList(); toast('Driver added: '+n);
+}
+function removeDriver(i){ const d=getDrivers(); d.splice(i,1); S.set('do_drivers',d); renderDriversList(); toast('Driver removed'); }
+
+function renderCompaniesList(){
+  const el=document.getElementById('companies-list'); if(!el) return;
+  const companies=getCompanies();
+  el.innerHTML=companies.length?companies.map((c,i)=>`
+    <div class="arow"><div class="aav" style="background:#8e44ad;font-size:18px">🚚</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.phone}</div></div>
+    <button class="ib del" onclick="removeCompany(${i})">🗑️</button></div>`).join('')
+    :'<div style="font-size:13px;color:var(--muted);padding:8px 0">No companies yet.</div>';
+}
+function addCompany(){
+  const n=document.getElementById('nc-name').value.trim(), p=document.getElementById('nc-phone').value.trim();
+  if(!n||!p){toast('Enter name and phone','var(--red)');return;}
+  const c=getCompanies(); c.push({name:n,phone:p}); S.set('do_companies',c);
+  document.getElementById('nc-name').value=''; document.getElementById('nc-phone').value='';
+  renderCompaniesList(); toast('Company added: '+n);
+}
+function removeCompany(i){ const c=getCompanies(); c.splice(i,1); S.set('do_companies',c); renderCompaniesList(); toast('Company removed'); }
+
+// ═══════════════════════════════════════
+// PRINT / SEND
+// ═══════════════════════════════════════
+let printOrderId=null, printTab='receipt';
+
+function openPrintModal(id){
+  printOrderId=id; printTab='receipt';
+  document.querySelectorAll('.print-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('.print-tab').classList.add('on');
+  renderPrintPreview();
+  openModal('print-modal');
+}
+
+function switchPrintTab(tab,el){
+  printTab=tab;
+  document.querySelectorAll('.print-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  renderPrintPreview();
+}
+
+function renderPrintPreview(){
+  const orders=getOrders(), o=orders.find(x=>x.id===printOrderId); if(!o) return;
+  const restName=getRestName(), now=new Date().toLocaleString('en-LB',{dateStyle:'short',timeStyle:'short'});
+  const preview=document.getElementById('print-preview');
+  const actions=document.getElementById('print-actions');
+
+  if(printTab==='receipt'){
+    const itemLines=o.items.split(',').map(i=>i.trim());
+    preview.innerHTML=`<div class="receipt-preview">
+      <div class="rhead">
+        <h2>${restName}</h2>
+        <p>${getRestAddr()}</p>
+        <p>${now}</p>
+        <p style="margin-top:4px;font-size:13px;font-weight:700">${o.id} · ${o.type==='dinein'?'Dine-in':o.type.charAt(0).toUpperCase()+o.type.slice(1)}</p>
+      </div>
+      <div class="rrow" style="color:#888"><span>Customer</span><span>${o.customer}</span></div>
+      ${o.address?`<div class="rrow" style="color:#888"><span>Address</span><span>${o.address}</span></div>`:''}
+      <div style="margin:10px 0;border-top:1px dashed #ccc;padding-top:10px">
+        ${itemLines.map(i=>`<div class="rrow"><span>${i}</span></div>`).join('')}
+      </div>
+      <div class="rrow bold"><span>TOTAL (USD)</span><span>${fmtUSD(o.usd)}</span></div>
+      <div class="rrow bold"><span>TOTAL (LBP)</span><span>${fmtLBP(o.lbp)}</span></div>
+      ${(()=>{ const v=vatBreakdown(o.lbp); return `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:11px;color:#666">
+        <div class="rrow"><span>Net (excl. VAT ${v.rate}%)</span><span>${v.net.toLocaleString()} LBP</span></div>
+        <div class="rrow"><span>VAT (${v.rate}%)</span><span>${v.vat.toLocaleString()} LBP</span></div>
+        <div class="rrow" style="font-weight:700;color:#000"><span>Total (incl. VAT)</span><span>${fmtLBP(v.total)}</span></div>
+      </div>`; })()}
+      ${o.payment?`<div class="rrow" style="color:#888;margin-top:4px"><span>Payment</span><span>${o.payment.toUpperCase()}</span></div>`:''}
+      <div class="rfoot">Thank you for your order!<br/>Powered by DirectOrder 🇱🇧</div>
+    </div>`;
+    actions.innerHTML=`
+      <button class="btn bg" style="flex:1" onclick="waReceipt()">💬 Send on WhatsApp</button>
+      <button class="btn bo" style="flex:1" onclick="printNow('receipt')">🖨️ Print</button>`;
+
+  } else if(printTab==='kitchen'){
+    const itemLines=o.items.split(',').map(i=>i.trim());
+    const typeLabel=o.type==='dinein'?'DINE-IN':o.type==='takeaway'?'TAKEAWAY':'DELIVERY';
+    preview.innerHTML=`<div class="kitchen-preview">
+      <div class="khead">
+        <div>
+          <div class="korder">${o.id}</div>
+          <div style="font-size:13px;margin-top:2px">${o.time}</div>
+        </div>
+        <div class="ktype">${typeLabel}</div>
+      </div>
+      ${o.address?`<div style="font-size:13px;margin-bottom:10px;color:#333">📍 ${o.address}</div>`:''}
+      ${itemLines.map(i=>`<div class="kitem"><span>${i}</span></div>`).join('')}
+      <div class="kfooter">${restName} · Kitchen Copy</div>
+    </div>`;
+    actions.innerHTML=`
+      <button class="btn bg" style="flex:1" onclick="printNow('kitchen')">🖨️ Print Kitchen Ticket</button>`;
+
+  } else if(printTab==='service'){
+    const itemLines=o.items.split(',').map(i=>i.trim());
+    preview.innerHTML=`<div class="kitchen-preview">
+      <div class="khead">
+        <div>
+          <div class="korder">${o.id}</div>
+          <div style="font-size:13px;margin-top:2px">${o.time}</div>
+        </div>
+        <div class="ktype" style="background:${o.type==='delivery'?'#1565C0':'#2e7d32'}">${o.type==='delivery'?'DELIVERY':'SERVICE'}</div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700">${o.customer}</div>
+        <div style="font-size:13px;color:#444">${o.phone}</div>
+        ${o.address?`<div style="font-size:13px;color:#333;margin-top:3px">📍 ${o.address}</div>`:''}
+      </div>
+      ${itemLines.map(i=>`<div class="kitem" style="font-size:13px"><span>${i}</span></div>`).join('')}
+      <div style="margin-top:10px;padding-top:8px;border-top:2px solid #000;display:flex;justify-content:space-between;font-weight:700">
+        <span>TOTAL</span><span>${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}</span>
+      </div>
+      ${o.deliveryAssignee?`<div style="margin-top:8px;font-size:12px;color:#555">Driver: ${o.deliveryAssignee}</div>`:''}
+      <div class="kfooter">${restName} · Service Copy</div>
+    </div>`;
+    actions.innerHTML=`
+      <button class="btn bg" style="flex:1" onclick="waSlip()">💬 Send on WhatsApp</button>
+      <button class="btn bo" style="flex:1" onclick="printNow('service')">🖨️ Print Slip</button>`;
+  }
+}
+
+function waReceipt(){
+  const orders=getOrders(), o=orders.find(x=>x.id===printOrderId); if(!o) return;
+  if(o.phone==='—'||!o.phone){ toast('No customer phone number','var(--amber)'); return; }
+  const restName=getRestName(), now=new Date().toLocaleString('en-LB',{dateStyle:'short',timeStyle:'short'});
+  const lines=o.items.split(',').map(i=>'• '+i.trim()).join('\n');
+  const msg=`🧾 *Receipt — ${restName}*\n\n`+
+    `Order: ${o.id}\nDate: ${now}\n`+
+    `Type: ${o.type==='dinein'?'Dine-in':o.type.charAt(0).toUpperCase()+o.type.slice(1)}\n`+
+    (o.address?`Address: ${o.address}\n`:'')+
+    `\n*Items:*\n${lines}\n\n`+
+    `*Total: ${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}*\n`+
+    (()=>{ const v=vatBreakdown(o.lbp); return `_Net: ${v.net.toLocaleString()} LBP | VAT ${v.rate}%: ${v.vat.toLocaleString()} LBP_\n`; })()+
+    (o.payment?`Payment: ${o.payment.toUpperCase()}\n`:'')+
+    `\nThank you for ordering from us! 🙏\nPowered by DirectOrder 🇱🇧`;
+  window.open('https://wa.me/'+o.phone.replace(/[\s+]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  toast('Receipt sent on WhatsApp ✓');
+}
+
+function waSlip(){
+  const orders=getOrders(), o=orders.find(x=>x.id===printOrderId); if(!o) return;
+  const phone=o.deliveryPhone||o.phone; if(!phone||phone==='—'){ toast('No phone number','var(--amber)'); return; }
+  const restName=getRestName(), lines=o.items.split(',').map(i=>'• '+i.trim()).join('\n');
+  const msg=`🛵 *Service Slip — ${restName}*\n\n`+
+    `Order: ${o.id}\nCustomer: ${o.customer}\nPhone: ${o.phone}\n`+
+    (o.address?`📍 Address: ${o.address}\n`:'')+
+    `\n*Items:*\n${lines}\n\n`+
+    `*Total: ${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}*`;
+  window.open('https://wa.me/'+phone.replace(/[\s+]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  toast('Slip sent on WhatsApp ✓');
+}
+
+function printNow(type){
+  const orders=getOrders(), o=orders.find(x=>x.id===printOrderId); if(!o) return;
+  const restName=getRestName(), now=new Date().toLocaleString('en-LB',{dateStyle:'short',timeStyle:'short'});
+  const itemLines=o.items.split(',').map(i=>i.trim());
+  let html='';
+
+  if(type==='receipt'){
+    html=`<div style="font-family:monospace;font-size:13px;padding:20px;max-width:300px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px dashed #000">
+        <h2 style="font-size:16px;margin-bottom:4px">${restName}</h2>
+        <p style="font-size:11px">${getRestAddr()}</p>
+        <p style="font-size:11px">${now}</p>
+        <p style="font-size:14px;font-weight:700;margin-top:4px">${o.id} · ${o.type==='dinein'?'Dine-in':o.type.charAt(0).toUpperCase()+o.type.slice(1)}</p>
+      </div>
+      <div style="margin-bottom:10px">${itemLines.map(i=>`<div style="padding:3px 0">${i}</div>`).join('')}</div>
+      <div style="border-top:2px dashed #000;padding-top:8px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:4px"><span>TOTAL USD</span><span>${fmtUSD(o.usd)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:700"><span>TOTAL LBP</span><span>${fmtLBP(o.lbp)}</span></div>
+        ${(()=>{ const v=vatBreakdown(o.lbp); return `
+        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #ccc;font-size:11px;color:#555">
+          <div style="display:flex;justify-content:space-between"><span>Net (excl. VAT)</span><span>${v.net.toLocaleString()} LBP</span></div>
+          <div style="display:flex;justify-content:space-between"><span>VAT ${v.rate}%</span><span>${v.vat.toLocaleString()} LBP</span></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700;color:#000;margin-top:3px"><span>Total incl. VAT</span><span>${fmtLBP(v.total)}</span></div>
+        </div>`; })()}
+      </div>
+      <div style="text-align:center;margin-top:12px;padding-top:10px;border-top:2px dashed #000;font-size:11px">Thank you! · DirectOrder 🇱🇧</div>
+    </div>`;
+  } else if(type==='kitchen'){
+    html=`<div style="font-family:monospace;padding:20px;max-width:320px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #000">
+        <div><div style="font-size:26px;font-weight:900">${o.id}</div><div style="font-size:12px">${o.time}</div></div>
+        <div style="background:#000;color:#fff;padding:5px 12px;border-radius:6px;font-size:13px;font-weight:700">${o.type==='dinein'?'DINE-IN':o.type==='takeaway'?'TAKEAWAY':'DELIVERY'}</div>
+      </div>
+      ${o.address?`<div style="font-size:13px;margin-bottom:10px">📍 ${o.address}</div>`:''}
+      ${itemLines.map(i=>`<div style="font-size:16px;font-weight:700;padding:7px 0;border-bottom:1px dashed #ccc">${i}</div>`).join('')}
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:#666">${restName} · KITCHEN</div>
+    </div>`;
+  } else {
+    html=`<div style="font-family:monospace;padding:20px;max-width:320px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #000">
+        <div><div style="font-size:22px;font-weight:900">${o.id}</div><div style="font-size:12px">${o.time}</div></div>
+        <div style="background:#1565C0;color:#fff;padding:5px 12px;border-radius:6px;font-size:13px;font-weight:700">SERVICE</div>
+      </div>
+      <div style="margin-bottom:10px"><div style="font-size:15px;font-weight:700">${o.customer}</div><div style="font-size:13px">${o.phone}</div>${o.address?`<div style="font-size:13px">📍 ${o.address}</div>`:''}</div>
+      ${itemLines.map(i=>`<div style="font-size:14px;font-weight:700;padding:6px 0;border-bottom:1px dashed #ccc">${i}</div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:10px;padding-top:8px;border-top:2px solid #000"><span>TOTAL</span><span>${fmtUSD(o.usd)} · ${fmtLBP(o.lbp)}</span></div>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:#666">${restName} · SERVICE</div>
+    </div>`;
+  }
+
+  const printable=document.getElementById('printable');
+  printable.innerHTML=html;
+  printable.style.display='block';
+  window.print();
+  setTimeout(()=>{ printable.style.display='none'; },1000);
+  toast('Sent to printer 🖨️');
+}
+
+function resetAll(){
+  if(!confirm('Reset ALL data? Cannot be undone.')) return;
+  ['do_pins','do_cats','do_menu','do_orders','do_custs','do_drivers','do_companies'].forEach(k=>localStorage.removeItem(k));
+  toast('Data reset'); renderDriversList(); renderCompaniesList(); renderDash(); renderOrders(); renderMenu(); renderCusts();
+}
+</script>
+</body>
+</html>
