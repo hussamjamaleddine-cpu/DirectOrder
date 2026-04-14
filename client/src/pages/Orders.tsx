@@ -88,7 +88,8 @@ export default function Orders() {
                   <th>Total</th>
                 </tr>
               </thead>
-                             ${order.items
+              <tbody>
+                ${order.items
                   .map(
                     (item) => {
                       let details = '';
@@ -107,7 +108,9 @@ export default function Orders() {
                       </tr>`;
                     }
                   )
-                  .join('')}         </table>
+                  .join('')}
+              </tbody>
+            </table>
           </div>
           <div class="total">
             <p>Total: $${order.totalUSD.toFixed(2)}</p>
@@ -274,29 +277,31 @@ export default function Orders() {
               </div>
 
               <div>
-                <p className="text-xs text-gray-600 	                <div className="space-y-2">
-	                  {selectedOrder.items.map((item, idx) => (
-	                    <div key={idx} className="bg-gray-50 p-2 rounded">
-	                      <div className="flex justify-between text-sm">
-	                        <span className="font-semibold">{item.name} × {item.quantity}</span>
-	                        <span className="font-mono">${(item.quantity * item.unitPriceUSD).toFixed(2)}</span>
-	                      </div>
-	                      {(item.selectedVariant || (item.selectedAddons && item.selectedAddons.length > 0) || item.specialRequest) && (
-	                        <div className="mt-1 text-xs text-gray-600 space-y-0.5">
-	                          {item.selectedVariant && <p>• Variant: {item.selectedVariant}</p>}
-	                          {item.selectedAddons && item.selectedAddons.length > 0 && (
-	                            <p>• Add-ons: {item.selectedAddons.join(', ')}</p>
-	                          )}
-	                          {item.specialRequest && (
-	                            <p className="italic text-amber-700 font-medium">
-	                              • Note: {item.specialRequest}
-	                            </p>
-	                          )}
-	                        </div>
-	                      )}
-	                    </div>
-	                  ))}
-	                </div>            </div>
+                <p className="text-xs text-gray-600 uppercase mb-2">Items</p>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="bg-gray-50 p-2 rounded">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-semibold">{item.name} × {item.quantity}</span>
+                        <span className="font-mono">${(item.quantity * item.unitPriceUSD).toFixed(2)}</span>
+                      </div>
+                      {(item.selectedVariant || (item.selectedAddons && item.selectedAddons.length > 0) || item.specialRequest) && (
+                        <div className="mt-1 text-xs text-gray-600 space-y-0.5">
+                          {item.selectedVariant && <p>• Variant: {item.selectedVariant}</p>}
+                          {item.selectedAddons && item.selectedAddons.length > 0 && (
+                            <p>• Add-ons: {item.selectedAddons.join(', ')}</p>
+                          )}
+                          {item.specialRequest && (
+                            <p className="italic text-amber-700 font-medium">
+                              • Note: {item.specialRequest}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="border-t pt-4">
                 <div className="flex justify-between font-semibold text-lg">

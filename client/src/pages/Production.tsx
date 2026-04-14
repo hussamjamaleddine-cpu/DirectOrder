@@ -350,10 +350,10 @@ export default function Production() {
                       <p className="text-sm text-gray-600 mt-1">
                         Quantity: {batch.quantity} servings | Cost: ${batch.totalCost.toFixed(2)} | Revenue: ${batch.totalRevenue.toFixed(2)}
                       </p>
-                               <p className="text-xs text-gray-500">
-                      {new Date(batch.startedAt).toLocaleString()}
-                      {batch.supplierName && ` · Supplier: ${batch.supplierName}`}
-                    </p>     </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(batch.startedAt).toLocaleString()}
+                        {batch.supplierName && ` · Supplier: ${batch.supplierName}`}
+                      </p>
                       {batch.notes && <p className="text-xs text-gray-600 mt-1">📝 {batch.notes}</p>}
                     </div>
                     <div className="flex gap-2">
